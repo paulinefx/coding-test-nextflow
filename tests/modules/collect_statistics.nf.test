@@ -1,0 +1,74 @@
+nextflow_process {
+    name "Test Process COLLECT_STATISTICS"
+    script "../../modules/collect_statistics.nf"
+    process "COLLECT_STATISTICS"
+    tag "modules"
+    tag "collect_statistics"
+
+    test("Should collect and summarize statistics") {
+        setup {
+            // Create sample collated statistics file
+            def collated_file = file("${workDir}/all_samples_stats.txt")
+            collated_file.text = """Sample\tIntersection_Count
+Sample1\t5
+Sample2\t3
+Sample3\t8
+Sample4\t2"""
+        }
+
+        when {
+            process {
+                """
+                input[0] = file("${workDir}/all_samples_stats.txt")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.final_report.size() == 1
+            
+            def report_file = process.out.final_report[0]
+            assert report_file.exists()
+            
+            def content = report_file.text
+            
+            // Check for summary statistics
+            assert content.toLowerCase().contains("total") || content.toLowerCase().contains("summary")
+            
+            // Should contain sample information
+            assert content.contains("Sample1") || content.contains("4")  // number of samples
+            
+            // Check for basic statistics (mean, etc.)
+            def lines = report_file.readLines()
+            assert lines.size() >= 3  // Should have multiple lines of summary
+        }
+    }
+
+    test("Should handle minimal statistics file") {
+        setup {
+            def minimal_file = file("${workDir}/minimal_stats.txt")
+            minimal_file.text = """Sample\tIntersection_Count
+OnlySample\t1"""
+        }
+
+        when {
+            process {
+                """
+                input[0] = file("${workDir}/minimal_stats.txt")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.final_report.size() == 1
+            
+            def report_file = process.out.final_report[0]
+            assert report_file.exists()
+            
+            def content = report_file.text
+            assert content.contains("OnlySample") || content.contains("1")
+        }
+    }
+}

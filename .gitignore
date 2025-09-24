@@ -1,0 +1,15 @@
+.DS_Store
+.nextflow*
+work/
+results/
+conda_cache/
+singularity_cache/
+*.log
+*.html
+*.svg
+*.txt
+*.pyc
+__pycache__/
+.vscode/
+.idea/
+answer

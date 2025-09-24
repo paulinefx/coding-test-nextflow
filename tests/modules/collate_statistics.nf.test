@@ -1,0 +1,79 @@
+nextflow_process {
+    name "Test Process COLLATE_STATISTICS"
+    script "../../modules/collate_statistics.nf"
+    process "COLLATE_STATISTICS"
+    tag "modules"
+    tag "collate_statistics"
+
+    test("Should collate multiple count files") {
+        setup {
+            // Create sample count files
+            def count1 = file("${workDir}/Sample1.count.txt")
+            def count2 = file("${workDir}/Sample2.count.txt")
+            
+            count1.text = "Sample1\t5"
+            count2.text = "Sample2\t3"
+        }
+
+        when {
+            process {
+                """
+                input[0] = [
+                    file("${workDir}/Sample1.count.txt"),
+                    file("${workDir}/Sample2.count.txt")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.collated_stats.size() == 1
+            
+            def stats_file = process.out.collated_stats[0]
+            assert stats_file.exists()
+            
+            def lines = stats_file.readLines()
+            // Should have header plus data lines
+            assert lines.size() >= 2
+            
+            // Check for header
+            def header = lines[0]
+            assert header.toLowerCase().contains("sample") || header.contains("Sample")
+            
+            // Check data content
+            def content = stats_file.text
+            assert content.contains("Sample1")
+            assert content.contains("Sample2")
+            assert content.contains("5")
+            assert content.contains("3")
+        }
+    }
+
+    test("Should handle single count file") {
+        setup {
+            def single_count = file("${workDir}/SingleSample.count.txt")
+            single_count.text = "SingleSample\t10"
+        }
+
+        when {
+            process {
+                """
+                input[0] = [ file("${workDir}/SingleSample.count.txt") ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.collated_stats.size() == 1
+            
+            def stats_file = process.out.collated_stats[0]
+            assert stats_file.exists()
+            
+            def content = stats_file.text
+            assert content.contains("SingleSample")
+            assert content.contains("10")
+        }
+    }
+}

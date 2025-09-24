@@ -1,0 +1,94 @@
+name: nf-test CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run nf-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nextflow-version: ['23.04.0', '23.10.1', 'latest']
+    
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v4
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: ${{ matrix.nextflow-version }}
+
+      - name: Cache nf-test installation
+        id: cache-nftest
+        uses: actions/cache@v3
+        with:
+          path: |
+            /usr/local/bin/nf-test
+            /home/runner/.nf-test
+          key: ${{ runner.os }}-nftest
+
+      - name: Install nf-test
+        if: steps.cache-nftest.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- https://code.askimed.com/install/nf-test | bash
+          sudo mv nf-test /usr/local/bin/
+
+      - name: Cache Singularity images
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.singularity/cache
+          key: ${{ runner.os }}-singularity-${{ hashFiles('**/modules/*.nf') }}
+          restore-keys: |
+            ${{ runner.os }}-singularity-
+
+      - name: Setup Singularity
+        uses: eWaterCycle/setup-singularity@v7
+        with:
+          singularity-version: 3.8.3
+
+      - name: Run nf-test
+        run: |
+          nf-test test --coverage --verbose
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          files: .nf-test/coverage/coverage.xml
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: nf-test-results-${{ matrix.nextflow-version }}
+          path: |
+            .nf-test/
+            !.nf-test/cache/
+
+  lint:
+    name: Code Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v4
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: 'latest'
+
+      - name: Run Nextflow lint
+        run: |
+          nextflow config -check-syntax main.nf
+          
+      - name: Check nf-schema validation
+        run: |
+          nextflow run . --help

@@ -1,0 +1,57 @@
+nextflow_process {
+    name "Test Process MERGE_BREAKENDS"
+    script "../../modules/merge_breakends.nf"
+    process "MERGE_BREAKENDS"
+    tag "modules"
+    tag "merge_breakends"
+
+    test("Should merge overlapping breakends in single file") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: "test_merge" ],
+                    file("${projectDir}/tests/data/test_breaks/TestSample1.breakends.bed")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.merged_breakends.size() == 1
+            
+            // Check output file exists and has content
+            def merged_file = process.out.merged_breakends[0][1]
+            assert merged_file.exists()
+            
+            // Verify content - should have content from TestSample1
+            def lines = merged_file.readLines()
+            assert lines.size() >= 1
+        }
+    }
+
+    test("Should handle single breakend file") {
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: "test_single" ],
+                    file("${projectDir}/tests/data/test_breaks/TestSample2.breakends.bed")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.merged_breakends.size() == 1
+            
+            def merged_file = process.out.merged_breakends[0][1]
+            assert merged_file.exists()
+            
+            def lines = merged_file.readLines()
+            assert lines.size() >= 1  // Should have at least some content
+        }
+    }
+}
