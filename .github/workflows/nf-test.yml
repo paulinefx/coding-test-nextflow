@@ -25,7 +25,7 @@ jobs:
 
       - name: Cache nf-test installation
         id: cache-nftest
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             /usr/local/bin/nf-test
@@ -39,7 +39,7 @@ jobs:
           sudo mv nf-test /usr/local/bin/
 
       - name: Cache Singularity images
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.singularity/cache
@@ -57,14 +57,14 @@ jobs:
           nf-test test --coverage --verbose
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         if: always()
         with:
           files: .nf-test/coverage/coverage.xml
           fail_ci_if_error: false
 
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: nf-test-results-${{ matrix.nextflow-version }}
