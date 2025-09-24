@@ -8,53 +8,20 @@ on:
 
 jobs:
   test:
-    name: Run nf-test
+    name: Run nf-test in Docker
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        nextflow-version: ['23.10.1', 'latest']
-    
+
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v4
 
-      - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
-        with:
-          version: ${{ matrix.nextflow-version }}
-
-      - name: Cache nf-test installation
-        id: cache-nftest
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/bin/nf-test
-            /home/runner/.nf-test
-          key: ${{ runner.os }}-nftest
-
-      - name: Install nf-test
-        if: steps.cache-nftest.outputs.cache-hit != 'true'
+      - name: Run nf-test in Docker
         run: |
-          wget -qO- https://code.askimed.com/install/nf-test | bash
-          sudo mv nf-test /usr/local/bin/
-
-      - name: Cache Singularity images
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.singularity/cache
-          key: ${{ runner.os }}-singularity-${{ hashFiles('**/modules/*.nf') }}
-          restore-keys: |
-            ${{ runner.os }}-singularity-
-
-      - name: Setup Singularity
-        uses: eWaterCycle/setup-singularity@v7
-        with:
-          singularity-version: 3.8.3
-
-      - name: Run nf-test
-        run: |
-          nf-test test --coverage --verbose
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            nextflow/nextflow:23.10.1 \
+            bash -c "wget -qO- https://code.askimed.com/install/nf-test | bash && mv nf-test /usr/local/bin/ && nf-test test --coverage --verbose"
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -67,8 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nf-test-results-${{ matrix.nextflow-version }}
+          name: nf-test-results
           path: |
             .nf-test/
             !.nf-test/cache/
-
