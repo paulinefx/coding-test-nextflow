@@ -20,8 +20,8 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            nextflow/nextflow:23.10.1 \
-            bash -c "apk add --no-cache tar curl && curl -fsSL https://code.askimed.com/install/nf-test | bash && mv nf-test /usr/local/bin/ && nf-test test --coverage --verbose"
+            askimed/nf-test:latest \
+            nf-test test --coverage --verbose
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
