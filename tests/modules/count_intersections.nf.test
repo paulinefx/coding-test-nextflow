@@ -29,18 +29,17 @@ chr21\t2050\t2051\tTestSample1_break_2\tchr21\t2000\t2100\tAsiSI_site_2"""
             assert process.out.counts.size() == 1
             
             def count_file = process.out.counts[0][1]
-            assert count_file.exists()
+            assert file(count_file).exists()
             
             // Check count file content
-            def content = count_file.text.trim()
+            def content = file(count_file).text.trim()
             def lines = content.split('\n')
             
-            // Should have header and count line
-            assert lines.size() >= 1
-            
-            // Parse the count (should be 2 based on our test data)
-            def count_line = lines.find { it.contains("test_count") || it.matches(/^\d+$/) }
-            assert count_line != null
+            // Should have header and at least one count line
+            assert lines.size() > 1
+            assert lines[0] == "chrom\tstart\tend\tcount"
+            // Check that at least one line has a count value
+            assert lines.any { it.split('\t').size() == 4 && it.split('\t')[3].isNumber() }
         }
     }
 
@@ -66,11 +65,11 @@ chr21\t2050\t2051\tTestSample1_break_2\tchr21\t2000\t2100\tAsiSI_site_2"""
             assert process.out.counts.size() == 1
             
             def count_file = process.out.counts[0][1]
-            assert count_file.exists()
+            assert file(count_file).exists()
             
-            // Should show 0 count
-            def content = count_file.text.trim()
-            assert content.contains("0") || content.contains("test_empty")
+            // Should only show header
+            def content = file(count_file).text.trim()
+            assert content == "chrom\tstart\tend\tcount"
         }
     }
 }

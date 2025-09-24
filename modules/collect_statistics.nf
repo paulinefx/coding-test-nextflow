@@ -24,6 +24,14 @@ process COLLECT_STATISTICS {
         tail -n +2 "\$file"
     done | sort -V >> all_samples_statistics.tsv
 
+    # Calculate summary statistics
+    total_samples=\$(grep -v '^Sample' all_samples_statistics.tsv | wc -l)
+    total_intersections=\$(grep -v '^Sample' all_samples_statistics.tsv | awk -F'\\t' '{sum += \$2} END {print sum}')
+    mean_intersections=\$(grep -v '^Sample' all_samples_statistics.tsv | awk -F'\\t' '{sum += \$2} END {if (NR > 0) print sum/NR; else print 0}')
+
+    # Append summary line
+    echo -e "SUMMARY\\tTotal_Samples: \$total_samples\\tTotal_Intersections: \$total_intersections\\tMean_Intersections: \$mean_intersections" >> all_samples_statistics.tsv
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         coreutils: \$(echo \$(sort --version 2>&1) | sed 's/^.*coreutils) //; s/ .*\$//')
