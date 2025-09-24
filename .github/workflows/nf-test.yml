@@ -20,7 +20,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            askimed/nf-test:latest \
+            ghcr.io/askimed/nf-test:latest \
             nf-test test --coverage --verbose
 
       - name: Upload coverage reports
