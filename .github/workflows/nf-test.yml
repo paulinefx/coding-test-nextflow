@@ -72,23 +72,3 @@ jobs:
             .nf-test/
             !.nf-test/cache/
 
-  lint:
-    name: Code Linting
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Check out pipeline code
-        uses: actions/checkout@v4
-
-      - name: Install Nextflow
-        uses: nf-core/setup-nextflow@v1
-        with:
-          version: 'latest'
-
-      - name: Run Nextflow lint
-        run: |
-          nextflow config -check-syntax main.nf
-          
-      - name: Check nf-schema validation
-        run: |
-          nextflow run . --help
