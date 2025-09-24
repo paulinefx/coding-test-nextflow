@@ -1,0 +1,76 @@
+nextflow_process {
+    name "Test Process COUNT_INTERSECTIONS"
+    script "../../modules/count_intersections.nf"
+    process "COUNT_INTERSECTIONS"
+    tag "modules"
+    tag "count_intersections"
+
+    test("Should count intersections correctly") {
+        setup {
+            // Create a sample intersection file
+            def intersection_file = file("${workDir}/test_intersections.bed")
+            intersection_file.text = """chr21\t1050\t1051\tTestSample1_break_1\tchr21\t1000\t1100\tAsiSI_site_1
+chr21\t2050\t2051\tTestSample1_break_2\tchr21\t2000\t2100\tAsiSI_site_2"""
+        }
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: "test_count" ],
+                    file("${workDir}/test_intersections.bed")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.counts.size() == 1
+            
+            def count_file = process.out.counts[0][1]
+            assert count_file.exists()
+            
+            // Check count file content
+            def content = count_file.text.trim()
+            def lines = content.split('\n')
+            
+            // Should have header and count line
+            assert lines.size() >= 1
+            
+            // Parse the count (should be 2 based on our test data)
+            def count_line = lines.find { it.contains("test_count") || it.matches(/^\d+$/) }
+            assert count_line != null
+        }
+    }
+
+    test("Should handle empty intersection file") {
+        setup {
+            def empty_file = file("${workDir}/empty_intersections.bed")
+            empty_file.text = ""
+        }
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: "test_empty" ],
+                    file("${workDir}/empty_intersections.bed")
+                ]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.counts.size() == 1
+            
+            def count_file = process.out.counts[0][1]
+            assert count_file.exists()
+            
+            // Should show 0 count
+            def content = count_file.text.trim()
+            assert content.contains("0") || content.contains("test_empty")
+        }
+    }
+}

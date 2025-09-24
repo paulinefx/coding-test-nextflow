@@ -1,0 +1,87 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/your-org/induce-seq-analysis/master/nextflow_schema.json",
+    "title": "INDUCE-seq Break Analysis Pipeline parameters",
+    "description": "Pipeline for processing INDUCE-seq break-end bed files to quantify breaks at predicted AsiSI restriction enzyme sites",
+    "type": "object",
+    "properties": {
+        "asisi_sites": {
+            "type": "string",
+            "format": "file-path",
+            "exists": true,
+            "pattern": "^\\S+\\.(bed|BED)$",
+            "description": "Path to the AsiSI sites BED file",
+            "help_text": "BED file containing the positions of AsiSI restriction enzyme sites on chromosome 21",
+            "fa_icon": "fas fa-file"
+        },
+        "sample_beds": {
+            "type": "string",
+            "description": "Glob pattern for sample BED files",
+            "help_text": "Glob pattern to match all sample break-end BED files (e.g., 'data/breaks/*.breakends.bed')",
+            "pattern": "^\\S+$",
+            "fa_icon": "fas fa-folder-open"
+        },
+        "merge_distance": {
+            "type": "integer",
+            "description": "Distance for merging nearby break-ends",
+            "help_text": "Maximum distance between break-ends to merge them together (use 0 for adjacent sites only)",
+            "default": 0,
+            "minimum": 0,
+            "fa_icon": "fas fa-ruler"
+        },
+        "outdir": {
+            "type": "string",
+            "format": "directory-path",
+            "description": "The output directory where the results will be saved",
+            "default": "./results",
+            "fa_icon": "fas fa-folder-open"
+        },
+        "help": {
+            "type": "boolean",
+            "description": "Display help text",
+            "fa_icon": "fas fa-question-circle",
+            "default": false,
+            "hidden": true
+        },
+        "version": {
+            "type": "boolean",
+            "description": "Display version and exit",
+            "fa_icon": "fas fa-tag",
+            "default": false,
+            "hidden": true
+        },
+        "max_memory": {
+            "type": "string",
+            "description": "Maximum amount of memory that can be requested for any single job",
+            "default": "8.GB",
+            "fa_icon": "fas fa-memory",
+            "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+            "hidden": true
+        },
+        "max_cpus": {
+            "type": "integer",
+            "description": "Maximum number of CPUs that can be requested for any single job",
+            "default": 4,
+            "minimum": 1,
+            "fa_icon": "fas fa-microchip",
+            "hidden": true
+        },
+        "max_time": {
+            "type": "string",
+            "description": "Maximum amount of time that can be requested for any single job",
+            "default": "240.h",
+            "fa_icon": "far fa-clock",
+            "pattern": "^(\\d+\\.?\\s*(s|m|h|d|day)\\s*)+$",
+            "hidden": true
+        }
+    },
+    "required": ["asisi_sites", "sample_beds", "outdir"],
+    "properties_meta": {
+        "asisi_sites": {
+            "help_text": "This should be a BED format file containing the genomic coordinates of AsiSI restriction enzyme sites. The file should have at least 3 columns: chromosome, start position, and end position."
+        },
+        "sample_beds": {
+            "help_text": "Use a glob pattern to specify all sample BED files. For example: 'data/breaks/*.breakends.bed' will match all files ending with '.breakends.bed' in the data/breaks directory."
+        }
+    }
+}
