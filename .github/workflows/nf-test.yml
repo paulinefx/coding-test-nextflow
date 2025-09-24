@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        nextflow-version: ['23.04.0', '23.10.1', 'latest']
+        nextflow-version: ['23.10.1', 'latest']
     
     steps:
       - name: Check out pipeline code
