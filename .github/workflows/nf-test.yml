@@ -15,7 +15,6 @@ jobs:
       - name: Check out pipeline code
         uses: actions/checkout@v4
 
-      - name: Run nf-test in Docker
       - name: Install nf-test
         run: |
           curl -fsSL https://code.askimed.com/install/nf-test | bash

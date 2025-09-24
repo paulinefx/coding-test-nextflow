@@ -9,11 +9,11 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = [
+                input[0] = file("${projectDir}/tests/data/test_chr21_AsiSI_sites.bed")
+                input[1] = [
                     [ id: "test_intersect" ],
-                    file("${projectDir}/tests/data/test_breaks/TestSample1.breakends.bed")
+                    file("${projectDir}/tests/data/TestSample1.breakends.bed")
                 ]
-                input[1] = file("${projectDir}/tests/data/test_chr21_AsiSI_sites.bed")
                 """
             }
         }
@@ -23,10 +23,10 @@ nextflow_process {
             assert process.out.intersections.size() == 1
             
             def intersection_file = process.out.intersections[0][1]
-            assert intersection_file.exists()
+            assert path(intersection_file).exists()
             
             // Check for proper intersection format
-            def lines = intersection_file.readLines()
+            def lines = path(intersection_file).readLines()
             // Should have intersections since TestSample1 breaks overlap with AsiSI sites
             assert lines.size() >= 1
             
@@ -47,11 +47,11 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = [
+                input[0] = file("${projectDir}/tests/data/test_chr21_AsiSI_sites.bed")
+                input[1] = [
                     [ id: "test_no_intersect" ],
                     file("${workDir}/no_overlap.bed")
                 ]
-                input[1] = file("${projectDir}/tests/data/test_chr21_AsiSI_sites.bed")
                 """
             }
         }
@@ -61,10 +61,10 @@ nextflow_process {
             assert process.out.intersections.size() == 1
             
             def intersection_file = process.out.intersections[0][1]
-            assert intersection_file.exists()
+            assert path(intersection_file).exists()
             
             // Should be empty or minimal content
-            def lines = intersection_file.readLines()
+            def lines = path(intersection_file).readLines()
             // File exists but may be empty (no intersections)
         }
     }

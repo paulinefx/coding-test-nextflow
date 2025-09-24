@@ -23,7 +23,7 @@ nextflow_process {
             
             // Check output file exists and has content
             def merged_file = process.out.merged_breakends[0][1]
-            assert merged_file.exists()
+            assert file(merged_file).exists()
             
             // Verify content - should have content from TestSample1
             def lines = merged_file.readLines()
@@ -48,7 +48,7 @@ nextflow_process {
             assert process.out.merged_breakends.size() == 1
             
             def merged_file = process.out.merged_breakends[0][1]
-            assert merged_file.exists()
+            assert file(merged_file).exists()
             
             def lines = merged_file.readLines()
             assert lines.size() >= 1  // Should have at least some content

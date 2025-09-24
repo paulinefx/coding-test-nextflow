@@ -7,31 +7,34 @@ nextflow_process {
 
     test("Should collect and summarize statistics") {
         setup {
-            // Create sample collated statistics file
-            def collated_file = file("${workDir}/all_samples_stats.txt")
-            collated_file.text = """Sample\tIntersection_Count
-Sample1\t5
-Sample2\t3
-Sample3\t8
-Sample4\t2"""
+            // Create sample collated statistics files with .statistics.tsv extension
+            def stats1 = file("${workDir}/Sample1.statistics.tsv")
+            stats1.text = """Sample\tIntersection_Count\nSample1\t5"""
+            def stats2 = file("${workDir}/Sample2.statistics.tsv")
+            stats2.text = """Sample\tIntersection_Count\nSample2\t3"""
+            def stats3 = file("${workDir}/Sample3.statistics.tsv")
+            stats3.text = """Sample\tIntersection_Count\nSample3\t8"""
+            def stats4 = file("${workDir}/Sample4.statistics.tsv")
+            stats4.text = """Sample\tIntersection_Count\nSample4\t2"""
         }
 
         when {
             process {
                 """
-                input[0] = file("${workDir}/all_samples_stats.txt")
+                input[0] = [file("${workDir}/Sample1.statistics.tsv"), file("${workDir}/Sample2.statistics.tsv"), file("${workDir}/Sample3.statistics.tsv"), file("${workDir}/Sample4.statistics.tsv")]
                 """
             }
         }
 
         then {
             assert process.success
-            assert process.out.final_report.size() == 1
+            assert process.out.combined_stats != null
+            assert process.out.combined_stats.size() == 1
             
-            def report_file = process.out.final_report[0]
-            assert report_file.exists()
+            def report_file = process.out.combined_stats[0]
+            assert new File(report_file.toString()).exists()
             
-            def content = report_file.text
+            def content = new File(report_file.toString()).text
             
             // Check for summary statistics
             assert content.toLowerCase().contains("total") || content.toLowerCase().contains("summary")
@@ -40,34 +43,34 @@ Sample4\t2"""
             assert content.contains("Sample1") || content.contains("4")  // number of samples
             
             // Check for basic statistics (mean, etc.)
-            def lines = report_file.readLines()
+            def lines = content.readLines()
             assert lines.size() >= 3  // Should have multiple lines of summary
         }
     }
 
     test("Should handle minimal statistics file") {
         setup {
-            def minimal_file = file("${workDir}/minimal_stats.txt")
-            minimal_file.text = """Sample\tIntersection_Count
-OnlySample\t1"""
+            def minimal_file = file("${workDir}/OnlySample.statistics.tsv")
+            minimal_file.text = """Sample\tIntersection_Count\nOnlySample\t1"""
         }
 
         when {
             process {
                 """
-                input[0] = file("${workDir}/minimal_stats.txt")
+                input[0] = file("${workDir}/OnlySample.statistics.tsv")
                 """
             }
         }
 
         then {
             assert process.success
-            assert process.out.final_report.size() == 1
+            assert process.out.combined_stats != null
+            assert process.out.combined_stats.size() == 1
             
-            def report_file = process.out.final_report[0]
-            assert report_file.exists()
+            def report_file = process.out.combined_stats[0]
+            assert new File(report_file.toString()).exists()
             
-            def content = report_file.text
+            def content = new File(report_file.toString()).text
             assert content.contains("OnlySample") || content.contains("1")
         }
     }

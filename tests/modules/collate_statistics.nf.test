@@ -1,79 +1,82 @@
 nextflow_process {
-    name "Test Process COLLATE_STATISTICS"
+    name "Test process COLLATE_STATISTICS"
     script "../../modules/collate_statistics.nf"
     process "COLLATE_STATISTICS"
     tag "modules"
     tag "collate_statistics"
 
-    test("Should collate multiple count files") {
+    test ("Should collate multiple count files"){
         setup {
-            // Create sample count files
-            def count1 = file("${workDir}/Sample1.count.txt")
-            def count2 = file("${workDir}/Sample2.count.txt")
-            
-            count1.text = "Sample1\t5"
-            count2.text = "Sample2\t3"
+            def count1 = file("${workDir}/Sample1.asisi_counts.tsv")
+            count1.text = """chrom\tstart\tend\tcount
+chr1\t100\t200\t5
+chr1\t300\t400\t3"""
+
+            def merged1 = file("${workDir}/Sample1.merged.bed")
+            merged1.text = """chr1\t100\t200\t3
+chr1\t300\t400\t3"""
         }
 
         when {
             process {
                 """
-                input[0] = [
-                    file("${workDir}/Sample1.count.txt"),
-                    file("${workDir}/Sample2.count.txt")
-                ]
+                input[0] = [ [ id: 'Sample1' ], file("${workDir}/Sample1.asisi_counts.tsv") ]
+                input[1] = [ [ id: 'Sample1' ], file("${workDir}/Sample1.merged.bed") ]
                 """
             }
         }
 
         then {
             assert process.success
-            assert process.out.collated_stats.size() == 1
-            
-            def stats_file = process.out.collated_stats[0]
+            assert process.out.statistics.size() == 1
+
+            def stats_path = process.out.statistics[0][1]
+            def stats_file = file(stats_path)
             assert stats_file.exists()
-            
+
             def lines = stats_file.readLines()
-            // Should have header plus data lines
-            assert lines.size() >= 2
-            
-            // Check for header
-            def header = lines[0]
-            assert header.toLowerCase().contains("sample") || header.contains("Sample")
-            
-            // Check data content
+            assert lines.size() == 2  // Header + 1 data line
+
             def content = stats_file.text
             assert content.contains("Sample1")
-            assert content.contains("Sample2")
-            assert content.contains("5")
-            assert content.contains("3")
+            assert content.contains("2")      // Two entries in counts file
+            assert content.contains("4.0")    // Mean breaks (5+3)/2
+            assert content.contains("3.0")    // Mean merged breakends
         }
     }
 
-    test("Should handle single count file") {
+    test ("Should handle single count file"){
         setup {
-            def single_count = file("${workDir}/SingleSample.count.txt")
-            single_count.text = "SingleSample\t10"
+            def single_count = file("${workDir}/SingleSample.asisi_counts.tsv")
+            single_count.text = """chrom\tstart\tend\tcount
+chr1\t100\t200\t10"""
+
+            def merged = file("${workDir}/SingleSample.merged.bed")
+            merged.text = "chr1\t100\t200\t4"
         }
 
         when {
             process {
                 """
-                input[0] = [ file("${workDir}/SingleSample.count.txt") ]
+                input[0] = [ [ id: 'SingleSample' ], file("${workDir}/SingleSample.asisi_counts.tsv") ]
+                input[1] = [ [ id: 'SingleSample' ], file("${workDir}/SingleSample.merged.bed") ]
                 """
             }
         }
 
         then {
             assert process.success
-            assert process.out.collated_stats.size() == 1
-            
-            def stats_file = process.out.collated_stats[0]
-            assert stats_file.exists()
-            
-            def content = stats_file.text
-            assert content.contains("SingleSample")
-            assert content.contains("10")
+            assert process.out.statistics.size() == 1
+
+            def single_stats_path = process.out.statistics[0][1]
+            def single_stats_file = file(single_stats_path)
+            assert single_stats_file.exists()
+
+            def single_content = single_stats_file.text
+            assert single_content.contains("SingleSample")
+            assert single_content.contains("1")      // One entry in counts file
+            assert single_content.contains("10.0")   // Single count value
+            assert single_content.contains("4.0")    // Single merged breakend value
         }
     }
 }
