@@ -1,7 +1,6 @@
 .DS_Store
 .nextflow*
 work/
-results/
 conda_cache/
 singularity_cache/
 *.log
