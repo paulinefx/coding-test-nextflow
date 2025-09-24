@@ -21,7 +21,7 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             nextflow/nextflow:23.10.1 \
-            bash -c "curl -fsSL https://code.askimed.com/install/nf-test | bash && mv nf-test /usr/local/bin/ && nf-test test --coverage --verbose"
+            bash -c "apt-get update && apt-get install -y tar curl && curl -fsSL https://code.askimed.com/install/nf-test | bash && mv nf-test /usr/local/bin/ && nf-test test --coverage --verbose"
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
